@@ -31,7 +31,22 @@ class ViewController: UIViewController {
             self?.view.layoutIfNeeded()
         })
     }
-
+    
+    // 기본적인 비동기 방식 구현
+    
+    func downLoadJosn(_ Url: String, _ completion: @escaping (String?) -> (Void)) {
+        // completion의 타입이 옵셔널인 경우 ex ((String?) -> Void)?) @escaping 생략 가능 -> default가 @escaping임
+        DispatchQueue.global().async {
+            let url = URL(string: Url)!
+            let data = try! Data(contentsOf: url)
+            let json = String(data: data, encoding: .utf8)
+            
+            DispatchQueue.main.async {
+                completion(json)
+            }
+        }
+    }
+    
     // MARK: SYNC
 
     @IBOutlet var activityIndicator: UIActivityIndicatorView!
@@ -40,11 +55,9 @@ class ViewController: UIViewController {
         editView.text = ""
         setVisibleWithAnimation(activityIndicator, true)
 
-        let url = URL(string: MEMBER_LIST_URL)!
-        let data = try! Data(contentsOf: url)
-        let json = String(data: data, encoding: .utf8)
-        self.editView.text = json
-        
-        self.setVisibleWithAnimation(self.activityIndicator, false)
+        downLoadJosn(MEMBER_LIST_URL) { json in
+            self.editView.text = json
+            self.setVisibleWithAnimation(self.activityIndicator, false)
+        }
     }
 }
