@@ -34,16 +34,30 @@ class MenuViewController: UIViewController {
                 cell.count.text = "\(item.count)"
                 
                 cell.onChange = { [weak self] increase in
+                    print("onChange")
                     self?.viewModel.changeCount(item: item, increase: increase)
                 }
                 
             }
             .disposed(by: disposeBag)
         
+        /*
+         
+         UI에 대한 작업 특징
+         - 항상 UI 쓰레드에서만 처리 (메인 쓰레드) -> .observeOn(MainScheduler.instance)
+         - 에러가 발생할떄의 처리 -> .catchErrorJustReturn("")
+         - 위의 두 개의 역할을 동시에 하는것이 .asDriver()임
+         - Driver을 사용할 때는 데이터 전달을 drive()로 하면된다.
+         
+         */
+        
         viewModel.itemsCount
             .map { "\($0)" }
-            .observeOn(MainScheduler.instance)
-            .bind(to: itemCountLabel.rx.text)
+            .asDriver(onErrorJustReturn: "")
+//            .catchErrorJustReturn("")
+//            .observeOn(MainScheduler.instance)
+//            .bind(to: itemCountLabel.rx.text)
+            .drive(itemCountLabel.rx.text)
             .disposed(by: disposeBag)
         
         // bind 사용 -> 순환참조 없이 subscribe의 onNext 사용 가능
@@ -93,6 +107,7 @@ class MenuViewController: UIViewController {
         // showAlert("Order Fail", "No Orders")
 //        performSegue(withIdentifier: "OrderViewController", sender: nil)
        
+        viewModel.onOrder()
        
     }
 }
